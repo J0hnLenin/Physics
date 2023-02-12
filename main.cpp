@@ -1,141 +1,195 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
+#include <stdlib.h> 
+#include <time.h>
 
-const double Gravitation_const = 0.009;
-const int way_const = 50001;
+using namespace sf;
+
+const float Gravitation_const = 0.1;
+const int window_size = 900;
+const int objects_quantity = 100;
+
+
 class corpuscle{
-public:
-    double size; 
-    double mass;
-    double charge;
-    double x;
-    double y;
-    sf::Vector2f speed = sf::Vector2f(0, 0);
+private:
+    Vector2f position; 
 
-    void init(double s, double m, double c, double X, double Y, sf::Vector2f sp){
-        size = s;
-        mass = m;
-        charge = c;
-        x = X;
-        y = Y;
-        speed = sp;
+public:
+    float size; 
+    float mass;
+    float charge;
+    
+    Vector2f speed = Vector2f(0, 0);
+    CircleShape shape;
+
+    void init(float Size, float Mass, float Charge, Vector2f Position, Vector2f Speed, Color color){
+        size = Size;
+        mass = Mass;
+        charge = Charge;
+
+        position = Position;
+        speed = Speed;
+
+        shape = CircleShape(size);
+        shape.setFillColor(color);
+        shape.setPosition(Position - Vector2f(size/sqrt(2), size/sqrt(2)));
+    }
+    void setPosition(Vector2f Position){
+        position = Position;
+        shape.setPosition(Position - Vector2f(size/sqrt(2), size/sqrt(2)));
     }
     
+    Vector2f getPosition(){
+        return position;
+    }
+
 };
 
-sf::Vector2f gravitation_power(corpuscle A, corpuscle B){
-    double x = A.x - B.x;
-    double y = A.y - B.y;
-
-    double z_2 = (pow(x, 2) + pow(y, 2));   
-    double F_x = x / pow(z_2, 0.5) * Gravitation_const * A.mass * B.mass / z_2; 
-    double F_y = y / pow(z_2, 0.5) * Gravitation_const * A.mass * B.mass / z_2; 
-
-    return sf::Vector2f(F_x, F_y);
+int box(Vector2f vector){
+    return int(vector.x / 300.3) + 3 * int(vector.y / 300.3); 
 }
 
-sf::Vector2f multiply_vector_by_scalar(sf::Vector2f vector, double scalar){
-    return sf::Vector2f(vector.x * scalar, vector.y * scalar);
+float RandomFloat(float min, float max){
+    int precision = 4;
+    
+
+    float value;
+
+    value = rand() % (int)pow(10, precision);
+    value = min + (value / pow(10, precision)) * (max - min);
+
+    return value;
+}
+
+float entropy(int box[9], double fact[objects_quantity + 1]){
+    int nums = objects_quantity;
+    float W = 0;
+
+    for(int i = 0; i<9; i++){
+        W = W + log(fact[nums] / fact[box[i]] / fact[nums - box[i]]);
+        nums = nums - box[i];
+    }
+
+    return W;
+}
+
+
+Vector2f operator* (float scalar, Vector2f vector){
+    return Vector2f(vector.x * scalar, vector.y * scalar);
+}
+Vector2f operator* (Vector2f vector, float scalar){
+    return Vector2f(vector.x * scalar, vector.y * scalar);
+}
+
+Vector2f gravitation_power(corpuscle A, corpuscle B){
+    float x = B.getPosition().x - A.getPosition().x;
+    float y = B.getPosition().y - A.getPosition().y;
+
+    float z = pow((pow(x, 2) + pow(y, 2)), 0.5);   
+    
+    float F_x = x * Gravitation_const * A.mass * B.mass / pow(z, 3); 
+    float F_y = y * Gravitation_const * A.mass * B.mass / pow(z, 3); 
+
+    return Vector2f(F_x, F_y);
 }
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(800, 800), "SFML works!");
+    srand(time(0));
+    int boxes[9];
 
-    corpuscle e;
-    e.init(5, 5, -1, 200, 400, sf::Vector2f(0, -0.02));
-    
-    sf::CircleShape e_circle(e.size);
-     
-    e_circle.setFillColor(sf::Color::Blue);
-    e_circle.setPosition(sf::Vector2f(e.x, e.y));
-
-    corpuscle p;
-    p.init(20, 20, +1, 400, 400, sf::Vector2f(0, 0.005));
-    
-    sf::CircleShape p_circle(p.size);
-    p_circle.setFillColor(sf::Color::Red);
-    p_circle.setPosition(sf::Vector2f(p.x, p.y));
-
-    sf::Vector2f e_way[way_const];
-    for(int i = 0; i<way_const; i++){
-        e_way[i] = sf::Vector2f(e.x + e.size/sqrt(2), e.y + e.size/sqrt(2));
+    double factorial[objects_quantity + 1]; 
+    factorial[0] = 1;
+    for(int i=1;i<objects_quantity + 1; i++){
+        factorial[i] = factorial[i-1] * i;
     }
 
-    sf::Vector2f p_way[way_const];
-    for(int i = 0; i<way_const; i++){
-        p_way[i] = sf::Vector2f(p.x + p.size/sqrt(2), p.y + p.size/sqrt(2));
+    RenderWindow window(VideoMode(window_size, window_size), "SFML works!");
+
+    corpuscle objects[objects_quantity];
+
+    for(int i=0; i<objects_quantity; i++){
+        
+        if(i%10 == 0){
+            corpuscle p; 
+            p.init(10, 20, +1, Vector2f(RandomFloat(390, window_size - 390), RandomFloat(390, window_size - 390)), Vector2f(RandomFloat(-0.1, 0.1), RandomFloat(-0.1, 0.1)), Color::Red);
+            objects[i] = p; 
+        }
+        else{
+            corpuscle e; 
+            e.init(5, 5, -1, Vector2f(RandomFloat(390, window_size - 390), RandomFloat(390, window_size - 390)), Vector2f(RandomFloat(-0.1, 0.1), RandomFloat(-0.1, 0.1)), Color::Blue);
+            objects[i] = e; 
+        }
+
+        
+        
+        
     }
+    
 
     while (window.isOpen())
     {
-        sf::Event event;
+        for(int i=0;i<9;i++){
+            boxes[i] = 0;
+        }
+        Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            if (event.type == Event::Closed)
                 window.close();
         }
 
-        if(e_circle.getGlobalBounds().intersects(p_circle.getGlobalBounds())){
-            
-            window.clear();
-            window.draw(e_circle);
-            window.draw(p_circle);
-            window.display();
-
-            continue;
-        }
-
-        sf::Vector2f F1 = gravitation_power(e, p);
-        sf::Vector2f F2 = gravitation_power(p, e);
-
-        e.speed = e.speed + multiply_vector_by_scalar(F2, 1/e.mass);
-        e.x = e.x + e.speed.x;
-        e.y = e.y + e.speed.y;  
-
-        p.speed = p.speed + multiply_vector_by_scalar(F1, 1/p.mass);
-        p.x = p.x + p.speed.x;
-        p.y = p.y + p.speed.y; 
-
-        e_circle.setPosition(sf::Vector2f(e.x, e.y));
-        p_circle.setPosition(sf::Vector2f(p.x, p.y));
-        
-        std::cout << e.x << e.y << '\n';
-        std::cout << p.x << p.y << '\n';
-
         window.clear();
 
-        e_way[way_const - 1] = sf::Vector2f(e.x + e.size/sqrt(2), e.y + e.size/sqrt(2));
-        p_way[way_const - 1] = sf::Vector2f(p.x + p.size/sqrt(2), p.y + p.size/sqrt(2));
+        Vector2f F;
+        for(int i=0; i<objects_quantity; i++){
+            F = Vector2f(0, 0);
 
-        for(int i = 0; i<way_const - 1; i++){
-           
-            e_way[i] = e_way[i+1];
-            p_way[i] = p_way[i+1];
-            
-            if(i % 1000 == 0){
-                sf::CircleShape e_point = sf::CircleShape(1);
-                e_point.setFillColor(sf::Color::White);
-                e_point.setPosition(e_way[i]);
-
-                window.draw(e_point);
-
-                sf::CircleShape p_point = sf::CircleShape(1);
-                p_point.setFillColor(sf::Color::Yellow);
-                p_point.setPosition(p_way[i]);
-
-                window.draw(p_point);
+            for(int j=0; j<objects_quantity; j++){
+                if(!(i==j or objects[i].shape.getGlobalBounds().intersects(objects[j].shape.getGlobalBounds()))){
+                    F = F + gravitation_power(objects[i], objects[j]);    
+                }
+                    
             }
             
+            objects[i].speed = objects[i].speed + (F * (1/objects[i].mass));
+            Vector2f new_Position = objects[i].getPosition() + objects[i].speed;
+
+            if (new_Position.x >= window_size)
+            {
+                new_Position.x = window_size;
+                objects[i].speed.x = objects[i].speed.x * -1;
+            }
+            if (new_Position.x <= 0)
+            {
+                new_Position.x = 0;
+                objects[i].speed.x = objects[i].speed.x * -1;
+            }
+            if (new_Position.y >= window_size)
+            {
+                new_Position.y = window_size;
+                objects[i].speed.y = objects[i].speed.y * -1;
+            }
+            if (new_Position.y <= 0)
+            {
+                new_Position.y = 0;
+                objects[i].speed.y = objects[i].speed.y * -1;
+            }
+            
+            boxes[box(new_Position)] ++;
+
+            objects[i].setPosition(new_Position);
+
+            window.draw(objects[i].shape);
         }
-
-        window.draw(e_circle);
-        window.draw(p_circle);
-
+        
+        std::cout << entropy(boxes, factorial) << '\n';
+        
         window.display();
     }
 
+    
     return 0;
 }
 
