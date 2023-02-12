@@ -1,0 +1,68 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "build-o",
+            "command": "C:\\MinGW\\bin\\g++.exe",
+            "args": [
+                "-c",
+                "main.cpp"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build",
+            "detail": "Задача создана отладчиком."
+            
+        },
+        {
+            "dependsOn": "build-o",
+            "type": "cppbuild",
+            "label": "buildexe",
+            "command": "C:\\MinGW\\bin\\g++.exe",
+            "args": [
+                "main.o",
+                "-o",
+                "main",
+                "-lsfml-graphics",
+                "-lsfml-window",
+                "-lsfml-system"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build",
+            "detail": "Задача создана отладчиком."
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe сборка активного файла",
+            "command": "C:\\MinGW\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Задача создана отладчиком."
+        }
+    ],
+    "version": "2.0.0"
+}
