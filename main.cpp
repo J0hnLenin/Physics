@@ -3,6 +3,8 @@
 #include <iostream>
 #include <stdlib.h> 
 #include <time.h>
+#include <vector>
+
 
 using namespace sf;
 
@@ -53,7 +55,6 @@ int box(Vector2f vector){
 float RandomFloat(float min, float max){
     int precision = 4;
     
-
     float value;
 
     value = rand() % (int)pow(10, precision);
@@ -105,7 +106,8 @@ int main()
         factorial[i] = factorial[i-1] * i;
     }
 
-    RenderWindow window(VideoMode(window_size, window_size), "SFML works!");
+    RenderWindow model_window(VideoMode(window_size, window_size), "Simple model");
+    RenderWindow date_window(VideoMode(window_size, window_size), "Grahp model");
 
     corpuscle objects[objects_quantity];
 
@@ -121,26 +123,29 @@ int main()
             e.init(5, 5, -1, Vector2f(RandomFloat(390, window_size - 390), RandomFloat(390, window_size - 390)), Vector2f(RandomFloat(-0.1, 0.1), RandomFloat(-0.1, 0.1)), Color::Blue);
             objects[i] = e; 
         }
+        
+    } 
 
-        
-        
-        
-    }
-    
+    long long int simulation_time = 0;
+    std::vector <CircleShape> data_massive = {};
+    int data_len = 0;
 
-    while (window.isOpen())
+    while (model_window.isOpen())
     {
+        Event event;
+        while (model_window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                model_window.close();
+        }
+
+        model_window.clear();
+
+        simulation_time++;
+        
         for(int i=0;i<9;i++){
             boxes[i] = 0;
         }
-        Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == Event::Closed)
-                window.close();
-        }
-
-        window.clear();
 
         Vector2f F;
         for(int i=0; i<objects_quantity; i++){
@@ -181,15 +186,39 @@ int main()
 
             objects[i].setPosition(new_Position);
 
-            window.draw(objects[i].shape);
+            model_window.draw(objects[i].shape);
         }
         
-        std::cout << entropy(boxes, factorial) << '\n';
+        float entropy_value = entropy(boxes, factorial);
+        std::cout << entropy_value << '\n';
+        model_window.display();
+
+        if(date_window.isOpen()){
+            Event event;
+            while (date_window.pollEvent(event))
+            {
+                if (event.type == Event::Closed)
+                    date_window.close();
+            }
+
+            date_window.clear();
+
+            CircleShape point(1);
+            point.setFillColor(Color::White);
+            point.setPosition(Vector2f(simulation_time/100, window_size - (entropy_value / 200 * 800 + 50)));
+            
+            data_massive.push_back(point);
+            data_len++;
+
+            for(int i=0; i<data_len; i++){
+                date_window.draw(data_massive[i]);
+            }
+            
+            date_window.display();
+        }
         
-        window.display();
     }
 
-    
     return 0;
 }
 
