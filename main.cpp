@@ -11,6 +11,7 @@ using namespace sf;
 const float Gravitation_const = 0.1;
 const int window_size = 900;
 const int objects_quantity = 100;
+const int splitting = 100;
 
 
 class corpuscle{
@@ -48,8 +49,10 @@ public:
 
 };
 
+
+
 int box(Vector2f vector){
-    return int(vector.x / 300.3) + 3 * int(vector.y / 300.3); 
+    return int(vector.x / (window_size / pow(splitting, 0.5))) + 3 * int(vector.y / (window_size / pow(splitting, 0.5))); 
 }
 
 float RandomFloat(float min, float max){
@@ -63,11 +66,11 @@ float RandomFloat(float min, float max){
     return value;
 }
 
-float entropy(int box[9], double fact[objects_quantity + 1]){
+float entropy(int box[splitting], double fact[objects_quantity + 1]){
     int nums = objects_quantity;
     float W = 0;
 
-    for(int i = 0; i<9; i++){
+    for(int i = 0; i<splitting; i++){
         W = W + log(fact[nums] / fact[box[i]] / fact[nums - box[i]]);
         nums = nums - box[i];
     }
@@ -98,7 +101,7 @@ Vector2f gravitation_power(corpuscle A, corpuscle B){
 int main()
 {
     srand(time(0));
-    int boxes[9];
+    int boxes[splitting];
 
     double factorial[objects_quantity + 1]; 
     factorial[0] = 1;
@@ -107,7 +110,7 @@ int main()
     }
 
     RenderWindow model_window(VideoMode(window_size, window_size), "Simple model");
-    RenderWindow date_window(VideoMode(window_size, window_size), "Grahp model");
+    RenderWindow data_window(VideoMode(window_size, window_size), "Grahp model");
 
     corpuscle objects[objects_quantity];
 
@@ -143,7 +146,7 @@ int main()
 
         simulation_time++;
         
-        for(int i=0;i<9;i++){
+        for(int i=0;i<splitting;i++){
             boxes[i] = 0;
         }
 
@@ -193,28 +196,38 @@ int main()
         std::cout << entropy_value << '\n';
         model_window.display();
 
-        if(date_window.isOpen()){
+        if(data_window.isOpen()){
             Event event;
-            while (date_window.pollEvent(event))
+            while (data_window.pollEvent(event))
             {
                 if (event.type == Event::Closed)
-                    date_window.close();
+                    data_window.close();
             }
 
-            date_window.clear();
+            data_window.clear();
 
-            CircleShape point(1);
+            RectangleShape abscissa(Vector2f(2, window_size - 100));
+            abscissa.rotate(-90);
+            abscissa.setPosition(Vector2f(50, window_size - 47));
+
+            RectangleShape ordinate(Vector2f(2, window_size - 100));
+            ordinate.setPosition(Vector2f(50, 50));
+
+            data_window.draw(abscissa);
+            data_window.draw(ordinate);
+
+            CircleShape point(1.5);
             point.setFillColor(Color::White);
-            point.setPosition(Vector2f(simulation_time/100, window_size - (entropy_value / 200 * 800 + 50)));
-            
+            point.setPosition(Vector2f(simulation_time/50 + 50, window_size - (entropy_value / 300 * 800 + 50)));
+            data_window.draw(point);
             data_massive.push_back(point);
             data_len++;
 
             for(int i=0; i<data_len; i++){
-                date_window.draw(data_massive[i]);
+                data_window.draw(data_massive[i]);
             }
             
-            date_window.display();
+            data_window.display();
         }
         
     }
